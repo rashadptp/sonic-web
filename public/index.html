@@ -3,10 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Website</title>
+    <title>Water Potability Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 columns */
+            gap: 16px; /* Space between items */
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .form-group input {
+            padding: 8px;
+            font-size: 16px;
+        }
+        button {
+            grid-column: span 3; /* Make the button span all 3 columns */
+            padding: 12px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            grid-column: span 3; /* Make the result span all 3 columns */
+            margin-top: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to My Website!</h1>
-    <p>This is a simple website hosted on AWS EC2.</p>
+    <div class="container">
+        <h1>Water Potability Prediction</h1>
+        <form id="predictionForm" class="form-grid">
+            <!-- Row 1 -->
+            <div class="form-group">
+                <label for="ph">pH:</label>
+                <input type="number" id="ph" name="ph" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <label for="Hardness">Hardness:</label>
+                <input type="number" id="Hardness" name="Hardness" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <label for="Solids">Solids:</label>
+                <input type="number" id="Solids" name="Solids" step="0.1" required>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="form-group">
+                <label for="Chloramines">Chloramines:</label>
+                <input type="number" id="Chloramines" name="Chloramines" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <label for="Sulfate">Sulfate:</label>
+                <input type="number" id="Sulfate" name="Sulfate" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <label for="Conductivity">Conductivity:</label>
+                <input type="number" id="Conductivity" name="Conductivity" step="0.1" required>
+            </div>
+
+            <!-- Row 3 -->
+            <div class="form-group">
+                <label for="Organic_carbon">Organic Carbon:</label>
+                <input type="number" id="Organic_carbon" name="Organic_carbon" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <label for="Trihalomethanes">Trihalomethanes:</label>
+                <input type="number" id="Trihalomethanes" name="Trihalomethanes" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <label for="Turbidity">Turbidity:</label>
+                <input type="number" id="Turbidity" name="Turbidity" step="0.1" required>
+            </div>
+
+            <!-- Button and Result -->
+            <button type="submit">Predict</button>
+            <div class="result" id="result"></div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const inputData = Object.fromEntries(formData.entries());
+
+            // Convert input values to numbers
+            for (const key in inputData) {
+                inputData[key] = parseFloat(inputData[key]);
+            }
+
+            const response = await fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(inputData),
+            });
+
+            const result = await response.json();
+            document.getElementById('result').textContent = result.message;
+        });
+    </script>
 </body>
 </html>
