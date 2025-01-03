@@ -52,6 +52,19 @@
             font-weight: bold;
             text-align: center;
         }
+        .status-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .safe {
+            background-color: green;
+        }
+        .not-safe {
+            background-color: red;
+        }
     </style>
 </head>
 <body>
@@ -102,7 +115,10 @@
 
             <!-- Button and Result -->
             <button type="submit">Predict</button>
-            <div class="result" id="result"></div>
+            <div class="result" id="result">
+                <span id="statusText"></span>
+                <span id="statusCircle" class="status-circle"></span>
+            </div>
         </form>
     </div>
 
@@ -127,7 +143,15 @@
             });
 
             const result = await response.json();
-            document.getElementById('result').textContent = result.message;
+            const statusText = document.getElementById('statusText');
+            const statusCircle = document.getElementById('statusCircle');
+
+            statusText.textContent = result.message;
+            if (result.message === 'The water is safe to drink') {
+                statusCircle.className = 'status-circle safe';
+            } else {
+                statusCircle.className = 'status-circle not-safe';
+            }
         });
     </script>
 </body>

@@ -76,12 +76,12 @@ app.post('/predict', async (req, res) => {
         // Send the response
         if (prediction === 1) {
             res.json({ 
-                message: "The water is safe to drink (Potability = 1).",
+                message: "The water is safe to drink",
                 probabilities: Array.from(probabilities) // Convert Float32Array to a regular array
             });
         } else {
             res.json({ 
-                message: "The water is not safe to drink (Potability = 0).",
+                message: "The water is not safe to drink",
                 probabilities: Array.from(probabilities) // Convert Float32Array to a regular array
             });
         }
