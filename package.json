@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "express": "^4.21.2",
-    "onnxruntime-node": "^1.20.1"
+    "onnxruntime-node": "^1.20.1",
+    "pg": "^8.13.1"
   }
 }

@@ -65,6 +65,23 @@
         .not-safe {
             background-color: red;
         }
+        .history {
+            margin-top: 40px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -120,9 +137,69 @@
                 <span id="statusCircle" class="status-circle"></span>
             </div>
         </form>
+
+        <!-- History Table -->
+        <div class="history">
+            <h2>Prediction History</h2>
+            <table id="historyTable">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>pH</th>
+                        <th>Hardness</th>
+                        <th>Solids</th>
+                        <th>Chloramines</th>
+                        <th>Sulfate</th>
+                        <th>Conductivity</th>
+                        <th>Organic Carbon</th>
+                        <th>Trihalomethanes</th>
+                        <th>Turbidity</th>
+                        <th>Potability</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Rows will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
+        // Function to fetch and display history
+        async function fetchHistory() {
+            try {
+                const response = await fetch('/history');
+                const history = await response.json();
+
+                const tableBody = document.querySelector('#historyTable tbody');
+                tableBody.innerHTML = ''; // Clear existing rows
+
+                history.forEach(entry => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${new Date(entry.prediction_time).toLocaleString()}</td>
+                        <td>${entry.ph}</td>
+                        <td>${entry.hardness}</td>
+                        <td>${entry.solids}</td>
+                        <td>${entry.chloramines}</td>
+                        <td>${entry.sulfate}</td>
+                        <td>${entry.conductivity}</td>
+                        <td>${entry.organic_carbon}</td>
+                        <td>${entry.trihalomethanes}</td>
+                        <td>${entry.turbidity}</td>
+                        <td>${entry.potability ? 'Safe' : 'Not Safe'}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error fetching history:', error);
+            }
+        }
+
+        // Fetch history when the page loads
+        document.addEventListener('DOMContentLoaded', fetchHistory);
+
+        // Handle form submission
         document.getElementById('predictionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -134,23 +211,31 @@
                 inputData[key] = parseFloat(inputData[key]);
             }
 
-            const response = await fetch('/predict', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(inputData),
-            });
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(inputData),
+                });
 
-            const result = await response.json();
-            const statusText = document.getElementById('statusText');
-            const statusCircle = document.getElementById('statusCircle');
+                const result = await response.json();
+                const statusText = document.getElementById('statusText');
+                const statusCircle = document.getElementById('statusCircle');
 
-            statusText.textContent = result.message;
-            if (result.message === 'The water is safe to drink') {
-                statusCircle.className = 'status-circle safe';
-            } else {
-                statusCircle.className = 'status-circle not-safe';
+                statusText.textContent = result.message;
+                if (result.message === 'The water is safe to drink') {
+                    statusCircle.className = 'status-circle safe';
+                } else {
+                    statusCircle.className = 'status-circle not-safe';
+                }
+
+                // Refresh the history table after a new prediction
+                fetchHistory();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please check the console for details.');
             }
         });
     </script>

@@ -1,6 +1,7 @@
 const express = require('express');
 const ort = require('onnxruntime-node');
 const path = require('path');
+const { Pool } = require('pg'); // Import PostgreSQL library
 
 // Initialize the Express app
 const app = express();
@@ -9,6 +10,15 @@ const port = 3000;
 // Middleware to parse JSON requests
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// PostgreSQL connection configuration
+const pool = new Pool({
+    user: 'rashad', // Replace with your PostgreSQL username
+    host: '18.143.206.136',           // Replace with your database host (e.g., EC2 public IP for remote)
+    database: 'water_potability', // Replace with your database name
+    password: 'rashad123', // Replace with your PostgreSQL password
+    port: 5432,                  // Default PostgreSQL port
+});
 
 // Load the ONNX model
 const modelPath = path.join(__dirname, 'water_potability_model2.onnx');
@@ -73,6 +83,28 @@ app.post('/predict', async (req, res) => {
         // Determine the predicted class based on probabilities
         const prediction = probabilities[1] > probabilities[0] ? 1 : 0; // Compare probabilities for class 1 and class 0
 
+        // Save the prediction to the database
+        const query = `
+            INSERT INTO predictions (ph, hardness, solids, chloramines, sulfate, conductivity, organic_carbon, trihalomethanes, turbidity, potability)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            RETURNING *;
+        `;
+        const values = [
+            inputData.ph,
+            inputData.Hardness,
+            inputData.Solids,
+            inputData.Chloramines,
+            inputData.Sulfate,
+            inputData.Conductivity,
+            inputData.Organic_carbon,
+            inputData.Trihalomethanes,
+            inputData.Turbidity,
+            prediction === 1, // potability (true if safe, false if not safe)
+        ];
+
+        const dbResult = await pool.query(query, values);
+        console.log('Prediction saved to database:', dbResult.rows[0]);
+
         // Send the response
         if (prediction === 1) {
             res.json({ 
@@ -89,7 +121,21 @@ app.post('/predict', async (req, res) => {
         console.error('Error:', error);
         res.status(500).json({ error: error.message }); // Send the actual error message
     }
-});// Route to serve the frontend
+});
+
+// Endpoint to fetch prediction history
+app.get('/history', async (req, res) => {
+    try {
+        const query = 'SELECT * FROM predictions ORDER BY prediction_time DESC;';
+        const result = await pool.query(query);
+        res.json(result.rows); // Send the history as JSON
+    } catch (error) {
+        console.error('Error fetching history:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Route to serve the frontend
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
